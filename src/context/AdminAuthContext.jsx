@@ -7,6 +7,8 @@ export function AdminAuthProvider({ children }) {
   const [admin, setAdminState] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  console.log("testing push");
+
   useEffect(() => {
     const storedAdmin = getAdmin();
     setAdminState(storedAdmin);
