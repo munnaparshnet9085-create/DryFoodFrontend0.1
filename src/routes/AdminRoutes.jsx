@@ -6,6 +6,7 @@ import PaymentsTable from "../pages/payment";
 import OrdersTable  from "../pages/order";
 import UsersPage from "../pages/user";
 import ReportsPage from "../pages/Report";
+import SettingPage from "../pages/setting";
 
 
 
@@ -20,7 +21,8 @@ export default function AdminRoutes() {
       <Route path ="/payment" element={<PaymentsTable />} />
             <Route path ="/orders" element={<OrdersTable />} />
             <Route path ="/users" element={<UsersPage />} />
-            <Route path ="/" element={<ReportsPage />} />
+            <Route path ="/reports" element={<ReportsPage />} />
+            <Route path ="/setting" element={<SettingPage />} />
 
     </Routes>
   );

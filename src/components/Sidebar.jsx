@@ -56,6 +56,16 @@ export default function Sidebar() {
                 Report
               </Link>
             </li>
+
+            
+            <li>
+              <Link
+                to="/setting"
+                className="block px-4 py-2 rounded-lg hover:bg-blue-500 transition"
+              >
+                Setting
+              </Link>
+            </li>
           </ul>
         </nav>
       </div>

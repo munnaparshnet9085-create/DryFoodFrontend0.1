@@ -1,238 +1,127 @@
+import React, { useEffect, useState } from 'react';
 
-
-import { useState } from "react";
-
-export default function AddProduct({ onClose, onAdd, showModal = true }) {
-  const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(null);
-
-  const [formData, setFormData] = useState({
-    title: "",
-    category: "",
-    description: "",
-    price: "",
-    stock: 0,
-    status: "Active",
+const AddProduct = ({ onSave }) => {
+  const [product, setProduct] = useState({
+    title: '',
+    description: '',
+    price: '',
+    category: '',
+    stock: '',
+    status: 'Active',
+    image: null,
   });
 
-  // Handle image selection
+  const [imagePreview, setImagePreview] = useState(null);
+  const [image, setImage] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const token = localStorage.getItem("adminToken");
+
+  const GetCategory = async () => {
+    try {
+      const response = await fetch(
+        "http://dryfoodapi.parshnet.com/api/category",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        setCategories(data);
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    GetCategory();
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setProduct((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
 
+    setProduct((prev) => ({ ...prev, image: file }));
     setImage(file);
-    setPreview(URL.createObjectURL(file));
+    setImagePreview(URL.createObjectURL(file));
   };
 
-  // Handle text inputs
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // Submit form
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (!formData.title || !formData.price) {
-      alert("Please fill in Product Name and Price");
-      return;
-    }
+    const formData = new FormData();
+    formData.append("name", product.title);
+    formData.append("description", product.description);
+    formData.append("price", product.price);
+    formData.append("categoryId", product.category);
+    formData.append("image", image);
 
-    // Prepare product data
-    const newProduct = {
-      id: Date.now(),
-      title: formData.title,
-      name: formData.title,
-      category: formData.category,
-      description: formData.description,
-      price: formData.price,
-      stock: formData.stock,
-      status: formData.status,
-      image: preview || "https://via.placeholder.com/300",
-    };
-
-    // Call onAdd callback to add product to table
-    if (typeof onAdd === "function") {
-      onAdd(newProduct);
-    }
-
-    // Close modal if provided
-    if (typeof onClose === "function") {
-      onClose();
-    }
-
-    // Reset form
-    setFormData({
-      title: "",
-      category: "",
-      description: "",
-      price: "",
-      stock: 0,
-      status: "Active",
-    });
-    setImage(null);
-    setPreview(null);
-    
-    alert("Product added successfully!");
+    onSave(formData); // send to parent
   };
 
-  const content = (
-    <div className="w-full">
-      <h1 className="text-2xl font-semibold mb-6">Add New Product</h1>
-
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 gap-4">
-          {/* IMAGE UPLOAD */}
-          <div className="border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center">
-            {preview ? (
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full h-48 object-cover rounded-lg"
-              />
+  return (
+    <form onSubmit={handleSubmit} style={{ background: '#fff', padding: 24, borderRadius: 8, maxWidth: 800, margin: 'auto' }}>
+      <h2>Product Image</h2>
+      <div style={{ display: 'flex', gap: 24 }}>
+        <div style={{ flex: 1 }}>
+          <label htmlFor="image-upload" style={{ display: 'block', marginBottom: 8 }}>
+            {imagePreview ? (
+              <img src={imagePreview} alt="Preview" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }} />
             ) : (
-              <>
-                <div className="text-4xl text-gray-400">☁</div>
-                <p className="mt-2 text-sm">Upload Image</p>
-              </>
+              <div style={{ width: 120, height: 120, border: '1px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+                Upload Image
+              </div>
             )}
+          </label>
 
-            <label className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer">
-              + Choose Image
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageChange}
-              />
-            </label>
-
-            <p className="text-xs text-gray-400 mt-2">
-              Recommended size: 800×800px
-            </p>
-          </div>
-
-          {/* FORM FIELDS */}
-          <div className="grid grid-cols-1 gap-3">
-            <div>
-              <label className="text-sm font-medium">Product Name</label>
-              <input
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
-                placeholder="Product Name"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Category</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
-                required
-              >
-                <option value="">Select Category</option>
-                <option value="Dry Fruits">Dry Fruits</option>
-                <option value="Spices">Spices</option>
-                <option value="Grocery">Grocery</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows="3"
-                maxLength="200"
-                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
-                placeholder="Product description..."
-              ></textarea>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Price</label>
-              <input
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                type="number"
-                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
-                placeholder="Price"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Quantity</label>
-              <input
-                name="stock"
-                value={formData.stock}
-                onChange={handleChange}
-                type="number"
-                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
-                placeholder="Quantity"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
-              >
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
-            </div>
-          </div>
+          <input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'block', marginTop: 8 }} />
+          <small>Recommended size: 800x800px</small>
         </div>
 
-        {/* SUBMIT */}
-        <div className="flex justify-center mt-6">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow font-medium"
+        <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <input name="title" value={product.title} onChange={handleChange} placeholder="Product Title" required style={{ padding: 8 }} />
+
+          <textarea name="description" value={product.description} onChange={handleChange} placeholder="Product Description" maxLength={500} rows={3} style={{ padding: 8 }} />
+
+          <input name="price" value={product.price} onChange={handleChange} placeholder="Price" type="text" required style={{ padding: 8 }} />
+
+          <select
+            name="category"
+            value={product.category}
+            onChange={handleChange}
+            required
+            style={{ padding: 8 }}
           >
-            + Add Product
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+            <option value="">Select Category</option>
 
-  // If onClose is provided and showModal is true, render as modal overlay
-  if (typeof onClose === "function" && showModal !== false) {
-    return (
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-        <div className="relative w-full max-w-4xl mx-4"> 
-          <div className="bg-white rounded-2xl overflow-auto max-h-[85vh] p-6">
-            <button
-              onClick={onClose}
-              className="absolute -top-3 -right-3 bg-white rounded-full p-2 shadow-lg text-xl"
-            >
-              ✕
-            </button>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
 
-            {content}
-          </div>
+          </select>
         </div>
       </div>
-    );
-  }
 
-  // Otherwise render as a normal form card
-  return (
-    <div className="bg-white rounded-2xl shadow p-6">
-      {content}
-    </div>
+      <button type="submit" style={{ marginTop: 24, padding: '10px 32px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 'bold' }}>
+        Save Product
+      </button>
+    </form>
   );
-}
+};
+
+export default AddProduct;
